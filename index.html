@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+
+    <title>Heatmap of Forest Fires Event</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.15/esri/themes/light/main.css"
+    />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.15/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/LayerList",
+        "esri/widgets/Swipe",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend"
+      ], function(Map, MapView, FeatureLayer, LayerList, Swipe, Expand, Legend) {
+        const url =
+          "https://gis-gfw.wri.org/arcgis/rest/services/Fires/FIRMS_Global_VIIRS_7d/MapServer?f=json";
+
+
+        const template = {
+          title: "{place}",
+          content: "Confirmation {Confirmation}."
+        };
+
+        // The heatmap renderer assigns each pixel in the view with
+        // an intensity value. The ratio of that intensity value
+        // to the maxPixel intensity is used to assign a color
+        // from the continuous color ramp in the colorStops property
+
+        const renderer = {
+          type: "heatmap",
+          colorStops: [
+            { color: "rgba(63, 40, 102, 0)", ratio: 0 },
+            { color: "#035c00", ratio: 0.083 },
+            { color: "#059800", ratio: 0.166 },
+            { color: "#07c700", ratio: 0.249 },
+            { color: "#09ff00", ratio: 0.332 },
+            { color: "#c1c932", ratio: 0.415 },
+            { color: "#e1ea53", ratio: 0.498 },
+            { color: "#f0ff00", ratio: 0.581 },
+            { color: "#f4c15f", ratio: 0.664 },
+            { color: "#ee9c00", ratio: 0.747 },
+            { color: "#ee5555", ratio: 0.83 },
+            { color: "#fb253a", ratio: 0.913 },
+            { color: "#EB002A", ratio: 1 }
+          ],
+          maxPixelIntensity: 25,
+          minPixelIntensity: 0
+        };
+
+        const layer = new FeatureLayer({
+          url: url,
+          title: "Forest Fires Event",
+          copyright: "Global Fires (VIIRS) 7 days",
+          popupTemplate: template,
+          renderer: renderer
+        });
+
+        const map = new Map({
+          basemap: "satellite",
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          center: [115.452754,  -2.710038],
+          zoom:6,
+          map: map
+        });
+
+        view.ui.add(
+          new Legend({
+            view: view
+          }),
+          "bottom-left"
+        );
+        
+        const heatmap = new FeatureLayer({
+          url:
+            "https://gis-gfw.wri.org/arcgis/rest/services/Fires/FIRMS_Global_VIIRS_7d/MapServer?f=json",
+          maxScale: 3000
+        });
+        map.add(heatmap);
+
+        const layerList = new LayerList({
+          view: view
+        });
+        const llExpand = new Expand({
+          view: view,
+          content: layerList,
+          expanded: false
+        });
+        view.ui.add(llExpand, "top-right");
+
+        // create a new Swipe widget
+        const swipe = new Swipe({
+          leadingLayers: [layer],
+          trailingLayers: [heatmap],
+          position: 35, // set position of widget to 35%
+          view: view
+        });
+
+        // add the widget to the view
+        view.ui.add(swipe);
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
